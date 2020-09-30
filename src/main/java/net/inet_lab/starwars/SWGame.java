@@ -46,7 +46,10 @@ public class SWGame implements GameMove {
             x += v;
             if (y < 0)
                 return false;
-            disp.put((int) x, y, "^");
+            final int ix = (int)x;
+            if (ix < 0 || ix >= X)
+                return false;
+            disp.put(ix, y, "^");
             return true;
         }
 
