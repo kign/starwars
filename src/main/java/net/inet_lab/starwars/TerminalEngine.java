@@ -48,14 +48,17 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
     @Override
     public void put(int x, int y, String text) {
-        g.putString(x, y, text);
+        if (x < 0 || y < 0 || x >= X || y >= Y)
+            msg("Invalid pos " + x + "," + y + ", text=" + text);
+        else
+            g.putString(x, y, text.substring(0,Math.min(X,text.length())));
     }
 
     @Override
     public void msg(String text) {
         if (status_lines > 0) {
-            put(0, Y-1, " ".repeat(X));
-            put(0, Y-1, text);
+            g.putString(0, Y-1, " ".repeat(X));
+            g.putString(0, Y-1, text.substring(0, Math.min(X, text.length())));
             flush();
         }
         trail_write("# " + text);
@@ -74,12 +77,12 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
     @Override
     public void run(GameMove gameMove) throws InterruptedException {
         final String err = _run(gameMove);
-        if (err != null) {
-            System.err.println(err);
+        if (err != null)
             trail_write("# ERROR " + err);
-        }
         trail_write("# END OF TRAIL");
         destroy();
+        if (err != null)
+            System.err.println(err);
     }
 
     private String _run(GameMove gameMove) throws InterruptedException {
