@@ -1,26 +1,16 @@
 package net.inet_lab.starwars;
 
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.graphics.TextGraphics;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.terminal.Terminal;
-
-import java.io.IOException;
 import java.util.*;
 
-public class SWGame {
+public class SWGame implements GameMove {
+    final DisplayDriver disp;
 
     // Terminal data
-    private final Terminal term;
-    private final TextGraphics g;
     private final int X, Y;
 
     // Game options
     private final int ship_max_v = 3;
     private final String ship_img = "(****)";
-    private final double fps = 5;
-    private final int status_lines = 1;
     private final String[] mars_img = {"/***\\", "\\***/"};
     private final int mars_strip = 5;
     private final int mars_num = 5;
@@ -39,7 +29,7 @@ public class SWGame {
     final private LinkedList<Bomb> bombs = new LinkedList<>();
     final private LinkedList<Missile> missiles = new LinkedList<>();
 
-    class Missile {
+    private class Missile {
         double x;
         int y;
         final double v;
@@ -56,7 +46,7 @@ public class SWGame {
             x += v;
             if (y < 0)
                 return false;
-            put((int) x, y, '^');
+            disp.put((int) x, y, "^");
             return true;
         }
 
@@ -65,11 +55,11 @@ public class SWGame {
         }
 
         public void clear () {
-            put((int) x, y, ' ');
+            disp.put((int) x, y, " ");
         }
     }
 
-    class Bomb {
+    private class Bomb {
         int y;
         final int x;
         public Bomb(final int x, final int y) {
@@ -83,7 +73,7 @@ public class SWGame {
             if (y >= Y)
                 return false;
 
-            put(x, y, 'o');
+            disp.put(x, y, "o");
             return true;
         }
 
@@ -92,11 +82,11 @@ public class SWGame {
         }
 
         public void clear () {
-            put(x, y, ' ');
+            disp.put(x, y, " ");
         }
     }
 
-    class Mars {
+    private class Mars {
         int t, x, v, tx;
         final int y;
         public Mars () {
@@ -128,8 +118,8 @@ public class SWGame {
                 v = rand.nextBoolean()?1:-1;
             }
 
-            put(x, y, mars_img[t % mars_img.length]);
-            flush();
+            disp.put(x, y, mars_img[t % mars_img.length]);
+            disp.flush();
 
             if (rand.nextDouble() < bomb_freq)
                 drop_bomb ();
@@ -139,7 +129,7 @@ public class SWGame {
 
         public void clear () {
             final int L = mars_img[0].length();
-            put(x, y, " ".repeat(L));
+            disp.put(x, y, " ".repeat(L));
         }
 
         public void drop_bomb() {
@@ -149,70 +139,37 @@ public class SWGame {
         }
     }
 
-    public SWGame(final Terminal terminal, final TextGraphics textGraphics) throws IOException {
-        term = terminal;
-        g = textGraphics;
+    public SWGame(DisplayDriver displayDriver) {
+        this.disp = displayDriver;
 
-        final TerminalSize s = term.getTerminalSize();
-        X = s.getColumns();
-        Y = s.getRows() - status_lines;
+        X = disp.getWidth();
+        Y = disp.getHeight();
     }
 
-    private void msg(String s) {
-        if (status_lines > 0) {
-            put(0, Y, " ".repeat(X));
-            put(0, Y, s);
-            flush();
-        }
-    }
+    @Override
+    public boolean move(EventDriver.Key key) {
+        gt ++;
 
-    private void flush() {
-        try {
-            term.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void put(final int x, final int y, final char c) {
-        g.putString(x, y, String.valueOf(c));
-    }
-
-    private void put(final int x, final int y, final String s) {
-        g.putString(x, y, s);
-    }
-
-    public void start() throws InterruptedException, IOException {
-        init();
-
-        while(true) {
-            gt ++;
-
-            KeyStroke key = term.pollInput();
-            if (key != null) {
-                KeyType tkey = key.getKeyType();
-                Character tchar = key.getCharacter();
-
-                if (tkey == KeyType.Escape || (tchar != null && tchar == 'q'))
-                    break;
-                else if (ship_v < ship_max_v && tkey == KeyType.ArrowRight) {
-                    ship_v++;
-                    msg("Speed " + ship_v);
-                }
-                else if (ship_v > -ship_max_v && tkey == KeyType.ArrowLeft) {
-                    ship_v--;
-                    msg("Speed " + ship_v);
-                }
-                else if (tchar != null && tchar == ' ')
-                    missiles.add(new Missile(ship_x, Y - ship_h, ship_v/4.0));
+        if (key != null) {
+            if (key == EventDriver.Key.ESC || key == EventDriver.Key.Q)
+                return false;
+            else if (ship_v < ship_max_v && key == EventDriver.Key.RIGHT) {
+                ship_v++;
+                disp.msg("Speed " + ship_v);
             }
-
-            move ();
-            Thread.sleep((long)(1000/fps));
+            else if (ship_v > -ship_max_v && key == EventDriver.Key.LEFT) {
+                ship_v--;
+                disp.msg("Speed " + ship_v);
+            }
+            else if (key == EventDriver.Key.SPC)
+                missiles.add(new Missile(ship_x, Y - ship_h, ship_v/4.0));
         }
+
+        _move ();
+        return true;
     }
 
-    public void move () {
+    private void _move () {
         final int L0 = ship_img.length() / 2;
         final int L1 = X - 1 - ship_img.length() + L0;
 
@@ -229,7 +186,7 @@ public class SWGame {
         }
 
         draw_ship(false);
-        flush();
+        disp.flush();
 
         for(int ii = 0; ii < mars_a.length; ii ++) {
             if (mars_a[ii] == null) {
@@ -296,17 +253,21 @@ public class SWGame {
 
     private void draw_ship(final boolean erase) {
         final int L = ship_img.length();
-        put(ship_x -  L/2, Y - ship_h, erase?" ".repeat(L):ship_img);
+        disp.put(ship_x -  L/2, Y - ship_h, erase?" ".repeat(L):ship_img);
     }
 
-    private void init() {
+    @Override
+    public void init(long seed) {
+        if (seed != 0)
+            rand.setSeed(seed);
+
         int x = 0, y = Y - 3;
         while (x + 2 < X) {
-            put(x, y, "\\o/");
-            put(x+1, y+1, 'O');
-            put(x, y+2, "J L");
+            disp.put(x, y, "\\o/");
+            disp.put(x+1, y+1, "O");
+            disp.put(x, y+2, "J L");
             x += 5;
-            flush();
+            disp.flush();
         }
 
         ship_x = X/2;
@@ -314,6 +275,6 @@ public class SWGame {
         draw_ship(false);
 
         gt = 0;
-        flush();
+        disp.flush();
     }
 }
