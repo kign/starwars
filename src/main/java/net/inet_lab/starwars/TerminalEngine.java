@@ -7,6 +7,7 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -14,6 +15,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
@@ -21,12 +24,17 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
     private final TextGraphics g;
     private Terminal term;
 
-    private int status_lines = 0;
-    private OutputStreamWriter trail = null;
+    private int status_lines;
+    private OutputStreamWriter trail;
+    private BufferedReader play;
     private static final int TRAIL_VER = 1;
     private final double fps = 5;
     private final int X, Y;
-    boolean write_filed = false;
+    private boolean write_filed;
+
+    private final static Pattern p_TrlHdr = Pattern.compile("^TRAIL\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)$");
+    private final static Pattern p_TrlLnCmd = Pattern.compile("^(\\d+)\\s+(.)\\s*(.*)$");
+
 
     @Override
     public int getWidth() {
@@ -62,44 +70,108 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         }
     }
 
+
     @Override
     public void run(GameMove gameMove) throws InterruptedException {
-        final long seed = System.currentTimeMillis();
+        final String err = _run(gameMove);
+        if (err != null) {
+            System.err.println(err);
+            trail_write("# ERROR " + err);
+        }
+        trail_write("# END OF TRAIL");
+        destroy();
+    }
+
+    private String _run(GameMove gameMove) throws InterruptedException {
+        long seed;
+        String cmd;
+        Matcher m;
+
+        if (play != null) {
+            cmd = play_read();
+            if (cmd == null)
+                return "Error reading trail";
+            m = p_TrlHdr.matcher(cmd);
+            if(!m.lookingAt())
+                return "Invalid trail command " + cmd;
+            final int trail_ver = Integer.parseInt(m.group(1));
+            final int trail_x = Integer.parseInt(m.group(2));
+            final int trail_y = Integer.parseInt(m.group(3));
+            seed = Long.parseLong(m.group(4));
+
+            if (trail_ver != 1)
+                return "Unsupported trail version " + trail_ver;
+
+            if (trail_x != X || trail_y != Y)
+                return "Inconsistent size: trail file " + trail_x + " x " + trail_y + ", terminal " + X + " x " + Y;
+        }
+        else
+            seed = System.currentTimeMillis();
 
         trail_write("TRAIL " + TRAIL_VER + " " + X + " " + Y + " " + seed);
 
         gameMove.init(seed);
 
+        cmd = null;
         int tick = 0;
-
         while(true) {
             tick ++;
 
-            KeyStroke key = null;
             Key gkey = null;
-            try {
-                key = term.pollInput();
-            } catch (IOException e) {
-                msg("poll failed " + e);
-            }
-            if (key != null) {
-                KeyType tkey = key.getKeyType();
-                Character tchar = key.getCharacter();
-                if (tkey == KeyType.Escape)
-                    gkey = Key.ESC;
-                else if (tkey == KeyType.ArrowRight)
-                    gkey = Key.RIGHT;
-                else if (tkey == KeyType.ArrowLeft)
-                    gkey = Key.LEFT;
-                else if (tchar != null) {
-                    if (tchar == ' ')
-                        gkey = Key.SPC;
-                    else {
+            if (play != null) {
+                if (cmd == null)
+                    cmd = play_read();
+                if (cmd == null)
+                    return "Trail file ended prematurely";
+                m = p_TrlLnCmd.matcher(cmd);
+                if (!m.lookingAt())
+                    return "Invalid trail command " + cmd;
+                final int trl_tick = Integer.parseInt(m.group(1));
+                final char trl_type = m.group(2).charAt(0);
+                final String trl_rest = m.group(3);
+
+                if (tick < trl_tick)
+                    gkey = null;
+                else if (tick == trl_tick) {
+                    if (trl_type == 'K') {
                         try {
-                            gkey = Key.valueOf(tchar.toString().toUpperCase());
+                            gkey = Key.valueOf(trl_rest);
+                        } catch (IllegalArgumentException err) {
+                            return "Invalid Key " + trl_rest;
                         }
-                        catch (IllegalArgumentException err) {
-                            msg("Key <" + tchar + "> ignored");
+                    }
+                    else
+                        return "Invalid trail type <" + trl_type + ">";
+                    cmd = null;
+                }
+                else
+                    return "Missed trail stop @ " + trl_tick + " (now at " + tick + ")";
+            }
+            else {
+                KeyStroke key = null;
+                try {
+                    key = term.pollInput();
+                } catch (IOException e) {
+                    msg("poll failed " + e);
+                }
+                if (key != null) {
+                    KeyType tkey = key.getKeyType();
+                    Character tchar = key.getCharacter();
+                    if (tkey == KeyType.Escape)
+                        gkey = Key.ESC;
+                    else if (tkey == KeyType.ArrowRight)
+                        gkey = Key.RIGHT;
+                    else if (tkey == KeyType.ArrowLeft)
+                        gkey = Key.LEFT;
+                    else if (tchar != null) {
+                        if (tchar == ' ')
+                            gkey = Key.SPC;
+                        else {
+                            try {
+                                gkey = Key.valueOf(tchar.toString().toUpperCase());
+                            } catch (IllegalArgumentException err) {
+                                msg("Key <" + tchar + "> ignored");
+                            }
                         }
                     }
                 }
@@ -109,8 +181,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                 trail_write(tick + " K " + gkey);
             if(!gameMove.move(gkey)) {
                 trail_write(tick + " E NORM");
-                destroy();
-                return;
+                return null;
             }
             Thread.sleep((long) (1000 / fps));
         }
@@ -129,6 +200,20 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                 msg("Trail: " + e);
             }
         }
+    }
+
+    private String play_read() {
+        String res;
+        do {
+            try {
+                res = play.readLine();
+            } catch (IOException e) {
+                msg("Filed to read: " + e);
+                return null;
+            }
+        }
+        while (res.charAt(0) == '#');
+        return res;
     }
 
     @Override
@@ -160,7 +245,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         return this;
     }
 
-    public TerminalEngine trailFile(String trail_file) {
+    public TerminalEngine saveTrailFile(String trail_file) {
         if (trail_file != null) {
             OutputStream out = null;
             for(int v = 0; out == null && v < 1000; v ++) {
@@ -177,6 +262,18 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                     msg("Trail: " + e);
                     break;
                 }
+            }
+        }
+        return this;
+    }
+
+    public TerminalEngine playTrailFile(String trail_file) {
+        if (trail_file != null) {
+            try {
+                play = Files.newBufferedReader(Paths.get(trail_file));
+            } catch (IOException e) {
+                System.err.println("File " + trail_file + ": " + e);
+                play = null;
             }
         }
         return this;
