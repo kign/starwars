@@ -75,7 +75,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
 
     @Override
-    public void run(GameMove gameMove) throws InterruptedException {
+    public void run(TerminalGame gameMove) throws InterruptedException {
         final String err = _run(gameMove);
         if (err != null)
             trail_write("# ERROR " + err);
@@ -85,7 +85,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
             System.err.println(err);
     }
 
-    private String _run(GameMove gameMove) throws InterruptedException {
+    private String _run(TerminalGame terminalGame) throws InterruptedException {
         long seed;
         String cmd;
         Matcher m;
@@ -96,7 +96,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                 return "Error reading trail";
             m = p_TrlHdr.matcher(cmd);
             if(!m.lookingAt())
-                return "Invalid trail command " + cmd;
+                return "Invalid trail header " + cmd;
             final int trail_ver = Integer.parseInt(m.group(1));
             final int trail_x = Integer.parseInt(m.group(2));
             final int trail_y = Integer.parseInt(m.group(3));
@@ -113,7 +113,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
         trail_write("TRAIL " + TRAIL_VER + " " + X + " " + Y + " " + seed);
 
-        gameMove.init(seed);
+        terminalGame.init(seed);
 
         cmd = null;
         int tick = 0;
@@ -182,7 +182,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
             if (gkey != null)
                 trail_write(tick + " K " + gkey);
-            if(!gameMove.move(gkey)) {
+            if(!terminalGame.move(gkey)) {
                 trail_write(tick + " E NORM");
                 return null;
             }

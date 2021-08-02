@@ -2,7 +2,7 @@ package net.inet_lab.starwars;
 
 import java.util.*;
 
-public class SWGame implements GameMove {
+public class SWGame implements TerminalGame {
     final DisplayDriver disp;
 
     // Terminal data
