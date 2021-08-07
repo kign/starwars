@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Starwars</title>
+    <script src="canvas.js"></script>
+    <script src="starwars.js"></script>
+</head>
+<body>
+<canvas id="myCanvas" tabindex='1' style="border:1px solid #000000; width: 100%; height: 100%"></canvas>
+<div id="msg">Press any key to start</div>
+<script>
+    let retVal = null;
+    let hInterval = null;
+    const fps = 5;
+    const keysQueue = [];
+
+    function starwars_msg(text) {
+        document.getElementById('msg').innerText = text;
+    }
+    function saveReturnValue(val) {
+        retVal = val;
+    }
+    Canvas.init("myCanvas");
+    starwars_dispatch (['init']);
+
+    if (window.location.hash === '#test') {
+        Canvas.dbgShowCells();
+        Canvas.dbgShowFont();
+    }
+    else {
+        document.addEventListener('keydown', function (evt) {
+            console.log("keydown:", evt.code);
+            if (hInterval) {
+                if (["KeyP", "KeyQ", "Escape"].includes(evt.code)) {
+                    keysQueue.splice(0, keysQueue.length)
+                    window.clearInterval(hInterval);
+                    hInterval = null;
+                    starwars_msg("Pause, press any key to resume...");
+                } else
+                    keysQueue.push(evt.code);
+            }
+            // Let's not react on meta-keys
+            else if (!["Shift", "Control", "Alt"].includes(evt.key)) {
+                hInterval = window.setInterval(function () {
+                    let key = "";
+                    if (keysQueue.length > 0)
+                        key = keysQueue.shift();
+                    starwars_dispatch(['move', key]);
+                    if (key)
+                        console.log("move(" + key + ") returned " + retVal);
+                    if (retVal === "false") {
+                        window.clearInterval(hInterval);
+                        hInterval = null;
+                    }
+                }, 1000 / fps);
+                keysQueue.push(evt.code);
+                starwars_msg("Started!");
+            }
+        });
+    }
+</script>
+</body>
+</html>

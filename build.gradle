@@ -1,16 +1,25 @@
 plugins {
     id 'java'
+    id 'application'
+
+    // https://github.com/zebalu/teavm-gradle-plugin
+    // https://plugins.gradle.org/plugin/io.github.zebalu.teavm-gradle-plugin
+    id "io.github.zebalu.teavm-gradle-plugin" version "1.0.0"
 }
 
-group 'net.inet_lab'
+group 'net.inet_lab.terminal_games'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 11
+targetCompatibility = 11
+
+def appName = 'starwars'
 
 repositories {
     mavenCentral()
 }
 
+/*
 jar {
     manifest {
         attributes(
@@ -18,9 +27,86 @@ jar {
         )
     }
 }
+*/
+
 
 dependencies {
-    compile group: 'com.googlecode.lanterna', name: 'lanterna', version: '3.0.3'
+    implementation group: 'com.googlecode.lanterna', name: 'lanterna', version: '3.0.3'
+    compileOnly group: 'org.teavm', name: 'teavm-jso', version: '0.6.1'
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+}
+
+application {
+    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWApp'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+teavm {
+    /** It a FileCollection object with all the calssfiles to use in compilation */
+
+    // See docs: http://teavm.org/docs/tooling/maven.html
+
+    // 'null' assignments seem to fail with "Ambiguous method overloading"
+    //classFiles = null;
+
+    //compileScopes = null;
+    minifying = false;
+    maxTopLevelNames = 10000;
+    //properties = null;
+    debugInformationGenerated = false;
+    sourceMapsGenerated = false;
+    sourceFilesCopied = false;
+    incremental = false;
+    //transformers = null;
+
+    /** Where to save the result */
+    targetDirectory = file("$buildDir/js")
+
+    /** The directory to monitor to decide if compile is up-to-date or not */
+    sourceDirectory = null;
+
+    /** How to name the result file. */
+    targetFileName = "${appName}.js";
+
+    /** Which class holds your public static void main(String[] args) method */
+    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWJSApp';
+
+    /** This will be the name of your main method after compilation. */
+    entryPointName = "${appName}_dispatch";
+
+    classesToPreserve = null;
+    stopOnErrors = true;
+    optimizationLevel = "SIMPLE"; //org.teavm.vm.TeaVMOptimizationLevel.SIMPLE;
+    fastGlobalAnalysis = false;
+
+    // WEBASSEMBLY is broken at the moment (TeaVM version 0.6.1)
+    // See: https://github.com/konsoletyper/teavm/issues/541
+
+    targetType = "JAVASCRIPT"; //org.teavm.tooling.TeaVMTargetType.JAVASCRIPT;
+    cacheDirectory = null;
+    wasmVersion = "V_0x1"; //org.teavm.backend.wasm.render.WasmBinaryVersion.V_0x1;
+    minHeapSize = 4;
+    maxHeapSize = 128;
+    outOfProcess = false;
+    processMemory = 512;
+    longjmpSupported = true;
+    heapDump = false;
+
+    /** Add name of configurations here where to look for jarfiles. */
+    includeJarsFrom = ['runtimeClasspath'];
+
+    /** FileCollection object which adds extra jars to compilation. */
+    // extraLibs = null;
+
+    /** By default teavm tasks append on javaCompile task, unless this variable is true. */
+    skipJavaCompile = false;
+
+    // This option as of now (2021-08-05) is still included in the doc, but isn't part of Java API
+    // looks like it's no longer relevant
+    // runtime = ???
 }
