@@ -67,6 +67,11 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
     }
 
     @Override
+    public void log(String text) {
+        // Do nothing
+    }
+
+    @Override
     public void flush() {
         try {
             term.flush();
@@ -85,6 +90,37 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         destroy();
         if (err != null)
             System.err.println(err);
+    }
+
+    private Key pollKey () {
+        KeyStroke key = null;
+        try {
+            key = term.pollInput();
+        } catch (IOException e) {
+            msg("poll failed " + e);
+        }
+        if (key != null) {
+            KeyType tkey = key.getKeyType();
+            Character tchar = key.getCharacter();
+            if (tkey == KeyType.Escape)
+                return Key.ESC;
+            else if (tkey == KeyType.ArrowRight)
+                return Key.RIGHT;
+            else if (tkey == KeyType.ArrowLeft)
+                return Key.LEFT;
+            else if (tchar != null) {
+                if (tchar == ' ')
+                    return Key.SPC;
+                else {
+                    try {
+                        return Key.valueOf(tchar.toString().toUpperCase());
+                    } catch (IllegalArgumentException err) {
+                        msg("Key <" + tchar + "> ignored");
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private String _run(TerminalGame terminalGame) throws InterruptedException {
@@ -153,39 +189,26 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                     return "Missed trail stop @ " + trl_tick + " (now at " + tick + ")";
             }
             else {
-                KeyStroke key = null;
-                try {
-                    key = term.pollInput();
-                } catch (IOException e) {
-                    msg("poll failed " + e);
-                }
-                if (key != null) {
-                    KeyType tkey = key.getKeyType();
-                    Character tchar = key.getCharacter();
-                    if (tkey == KeyType.Escape)
-                        gkey = Key.ESC;
-                    else if (tkey == KeyType.ArrowRight)
-                        gkey = Key.RIGHT;
-                    else if (tkey == KeyType.ArrowLeft)
-                        gkey = Key.LEFT;
-                    else if (tchar != null) {
-                        if (tchar == ' ')
-                            gkey = Key.SPC;
-                        else {
-                            try {
-                                gkey = Key.valueOf(tchar.toString().toUpperCase());
-                            } catch (IllegalArgumentException err) {
-                                msg("Key <" + tchar + "> ignored");
-                            }
-                        }
-                    }
-                }
+                gkey = pollKey();
             }
 
+            if (gkey == Key.P) {
+                gkey = null;
+                while (gkey == null) {
+                    Thread.sleep(100L);
+                    gkey = pollKey();
+                }
+                if (gkey == Key.P)
+                    continue;
+            }
             if (gkey != null)
                 trail_write(tick + " K " + gkey);
-            if(!terminalGame.move(gkey)) {
+            if (gkey == Key.ESC || gkey == Key.Q) {
                 trail_write(tick + " E NORM");
+                return null;
+            }
+            if(!terminalGame.move(gkey)) {
+                trail_write(tick + " E OVER");
                 return null;
             }
             Thread.sleep((long) (1000 / fps));
