@@ -39,7 +39,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWApp'
+    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWJavaApp'
 }
 
 test {
@@ -55,56 +55,56 @@ teavm {
     //classFiles = null;
 
     //compileScopes = null;
-    minifying = false;
-    maxTopLevelNames = 10000;
-    //properties = null;
-    debugInformationGenerated = false;
-    sourceMapsGenerated = false;
-    sourceFilesCopied = false;
-    incremental = false;
-    //transformers = null;
+    minifying = false
+    maxTopLevelNames = 10000
+    //properties = null
+    debugInformationGenerated = false
+    sourceMapsGenerated = false
+    sourceFilesCopied = false
+    incremental = false
+    //transformers = null
 
     /** Where to save the result */
     targetDirectory = file("$buildDir/js")
 
     /** The directory to monitor to decide if compile is up-to-date or not */
-    sourceDirectory = null;
+    sourceDirectory = null
 
     /** How to name the result file. */
-    targetFileName = "${appName}.js";
+    targetFileName = "${appName}.js"
 
     /** Which class holds your public static void main(String[] args) method */
-    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWJSApp';
+    mainClass = 'net.inet_lab.terminal_games.starwars.app.SWJSApp'
 
     /** This will be the name of your main method after compilation. */
-    entryPointName = "${appName}_dispatch";
+    entryPointName = "${appName}_dispatch"
 
-    classesToPreserve = null;
-    stopOnErrors = true;
-    optimizationLevel = "SIMPLE"; //org.teavm.vm.TeaVMOptimizationLevel.SIMPLE;
-    fastGlobalAnalysis = false;
+    classesToPreserve = null
+    stopOnErrors = true
+    optimizationLevel = "SIMPLE" //org.teavm.vm.TeaVMOptimizationLevel.SIMPLE;
+    fastGlobalAnalysis = false
 
     // WEBASSEMBLY is broken at the moment (TeaVM version 0.6.1)
     // See: https://github.com/konsoletyper/teavm/issues/541
 
-    targetType = "JAVASCRIPT"; //org.teavm.tooling.TeaVMTargetType.JAVASCRIPT;
-    cacheDirectory = null;
-    wasmVersion = "V_0x1"; //org.teavm.backend.wasm.render.WasmBinaryVersion.V_0x1;
-    minHeapSize = 4;
-    maxHeapSize = 128;
-    outOfProcess = false;
-    processMemory = 512;
-    longjmpSupported = true;
-    heapDump = false;
+    targetType = "JAVASCRIPT" //org.teavm.tooling.TeaVMTargetType.JAVASCRIPT;
+    cacheDirectory = null
+    wasmVersion = "V_0x1" //org.teavm.backend.wasm.render.WasmBinaryVersion.V_0x1;
+    minHeapSize = 4
+    maxHeapSize = 128
+    outOfProcess = false
+    processMemory = 512
+    longjmpSupported = true
+    heapDump = false
 
     /** Add name of configurations here where to look for jarfiles. */
-    includeJarsFrom = ['runtimeClasspath'];
+    includeJarsFrom = ['runtimeClasspath']
 
     /** FileCollection object which adds extra jars to compilation. */
-    // extraLibs = null;
+    // extraLibs = null
 
     /** By default teavm tasks append on javaCompile task, unless this variable is true. */
-    skipJavaCompile = false;
+    skipJavaCompile = false
 
     // This option as of now (2021-08-05) is still included in the doc, but isn't part of Java API
     // looks like it's no longer relevant
