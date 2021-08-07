@@ -2,6 +2,7 @@ package net.inet_lab.terminal_games.starwars.game;
 
 import net.inet_lab.terminal_games.common.DisplayDriver;
 import net.inet_lab.terminal_games.common.EventDriver;
+import net.inet_lab.terminal_games.common.Utils;
 
 import java.util.*;
 
@@ -37,6 +38,8 @@ public class SWGame implements DisplayDriver.TerminalGame {
 
         X = disp.getWidth();
         Y = disp.getHeight();
+
+        log("SWGame: X = " + X + ", Y = " + Y);
     }
 
     private class Missile {
@@ -142,7 +145,7 @@ public class SWGame implements DisplayDriver.TerminalGame {
 
         public void clear () {
             final int L = mars_img[0].length();
-            disp.put(x, y, " ".repeat(L));
+            disp.put(x, y, Utils.repeat(" ", L));
         }
 
         public void drop_bomb() {
@@ -157,9 +160,7 @@ public class SWGame implements DisplayDriver.TerminalGame {
         gt ++;
 
         if (key != null) {
-            if (key == EventDriver.Key.ESC || key == EventDriver.Key.Q)
-                return false;
-            else if (ship_v < ship_max_v && key == EventDriver.Key.RIGHT) {
+            if (ship_v < ship_max_v && key == EventDriver.Key.RIGHT) {
                 ship_v++;
                 disp.msg("Speed " + ship_v);
             }
@@ -204,16 +205,18 @@ public class SWGame implements DisplayDriver.TerminalGame {
             }
         }
 
-        bombs.removeIf(bomb -> !bomb.move());
+        //bombs.removeIf(bomb -> !bomb.move());
+        Utils.removeIf(bombs, bomb -> !bomb.move());
         missile_x_bomb();
-        missiles.removeIf(missile -> !missile.move());
+        //missiles.removeIf(missile -> !missile.move());
+        Utils.removeIf(missiles, missile -> !missile.move());
         missile_x_bomb();
 
         missile_x_mars ();
     }
 
     private void missile_x_mars () {
-        missiles.removeIf(missile -> {
+        Utils.removeIf(missiles, missile -> {
             if (missile.y >= mars_strip)
                 return false;
 
@@ -243,13 +246,13 @@ public class SWGame implements DisplayDriver.TerminalGame {
 
         c_missiles.retainAll(c_bombs);
 
-        bombs.removeIf(bomb -> {
+        Utils.removeIf(bombs, bomb -> {
             boolean rem = c_missiles.contains(bomb.get_pos());
             if (rem)
                 bomb.clear();
             return rem;
         });
-        missiles.removeIf(missile -> {
+        Utils.removeIf(missiles, missile -> {
             boolean rem = c_missiles.contains(missile.get_pos());
             if (rem)
                 missile.clear ();
@@ -259,7 +262,7 @@ public class SWGame implements DisplayDriver.TerminalGame {
 
     private void draw_ship(final boolean erase) {
         final int L = ship_img.length();
-        disp.put(ship_x -  L/2, Y - ship_h, erase?" ".repeat(L):ship_img);
+        disp.put(ship_x -  L/2, Y - ship_h, erase?Utils.repeat(" ",L):ship_img);
     }
 
     @Override
@@ -282,5 +285,9 @@ public class SWGame implements DisplayDriver.TerminalGame {
 
         gt = 0;
         disp.flush();
+    }
+
+    private void log(String message) {
+        this.disp.log(message);
     }
 }
