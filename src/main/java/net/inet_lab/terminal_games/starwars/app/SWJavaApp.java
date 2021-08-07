@@ -5,7 +5,7 @@ import net.inet_lab.terminal_games.starwars.game.SWGame;
 
 import java.io.IOException;
 
-public class SWApp {
+public class SWJavaApp {
     public static void main(String[] args) throws InterruptedException, IOException {
         TerminalEngine terminalEngine = new TerminalEngine().statusLine(1).saveTrailFile("sw.trail");
         if (args.length > 0)
