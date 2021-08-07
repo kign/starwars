@@ -1,4 +1,4 @@
-package net.inet_lab.starwars;
+package net.inet_lab.terminal_games.common;
 
 public interface DisplayDriver {
     int getWidth();
@@ -7,4 +7,9 @@ public interface DisplayDriver {
     void msg(String text);
     void flush();
     void destroy();
+
+    interface TerminalGame {
+        boolean move(EventDriver.Key key);
+        void init(long seed);
+    }
 }

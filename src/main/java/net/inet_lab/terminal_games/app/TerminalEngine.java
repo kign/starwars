@@ -1,4 +1,4 @@
-package net.inet_lab.starwars;
+package net.inet_lab.terminal_games.app;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.graphics.TextGraphics;
@@ -6,6 +6,8 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+import net.inet_lab.terminal_games.common.DisplayDriver;
+import net.inet_lab.terminal_games.common.EventDriver;
 
 import java.io.BufferedReader;
 import java.io.IOException;

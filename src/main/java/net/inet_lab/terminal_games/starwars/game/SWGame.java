@@ -1,8 +1,11 @@
-package net.inet_lab.starwars;
+package net.inet_lab.terminal_games.starwars.game;
+
+import net.inet_lab.terminal_games.common.DisplayDriver;
+import net.inet_lab.terminal_games.common.EventDriver;
 
 import java.util.*;
 
-public class SWGame implements TerminalGame {
+public class SWGame implements DisplayDriver.TerminalGame {
     final DisplayDriver disp;
 
     // Terminal data
@@ -28,6 +31,13 @@ public class SWGame implements TerminalGame {
     final private Mars[] mars_a = new Mars[mars_num];
     final private LinkedList<Bomb> bombs = new LinkedList<>();
     final private LinkedList<Missile> missiles = new LinkedList<>();
+
+    public SWGame(DisplayDriver displayDriver) {
+        this.disp = displayDriver;
+
+        X = disp.getWidth();
+        Y = disp.getHeight();
+    }
 
     private class Missile {
         double x;
@@ -140,13 +150,6 @@ public class SWGame implements TerminalGame {
             if (bx >= 0 && bx < X-1)
                 bombs.add(new Bomb(bx, y));
         }
-    }
-
-    public SWGame(DisplayDriver displayDriver) {
-        this.disp = displayDriver;
-
-        X = disp.getWidth();
-        Y = disp.getHeight();
     }
 
     @Override

@@ -1,4 +1,7 @@
-package net.inet_lab.starwars;
+package net.inet_lab.terminal_games.starwars.app;
+
+import net.inet_lab.terminal_games.app.TerminalEngine;
+import net.inet_lab.terminal_games.starwars.game.SWGame;
 
 import java.io.IOException;
 
