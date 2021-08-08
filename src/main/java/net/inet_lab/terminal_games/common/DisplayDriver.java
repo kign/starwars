@@ -19,9 +19,4 @@ public interface DisplayDriver {
 
     // cleanup
     void destroy();
-
-    interface TerminalGame {
-        boolean move(EventDriver.Key key);
-        void init(long seed);
-    }
 }

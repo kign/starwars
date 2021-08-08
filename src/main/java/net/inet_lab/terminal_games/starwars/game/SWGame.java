@@ -2,15 +2,16 @@ package net.inet_lab.terminal_games.starwars.game;
 
 import net.inet_lab.terminal_games.common.DisplayDriver;
 import net.inet_lab.terminal_games.common.EventDriver;
+import net.inet_lab.terminal_games.common.TerminalGame;
 import net.inet_lab.terminal_games.common.Utils;
 
 import java.util.*;
 
-public class SWGame implements DisplayDriver.TerminalGame {
-    final DisplayDriver disp;
+public class SWGame implements TerminalGame {
+    private DisplayDriver disp;
 
     // Terminal data
-    private final int X, Y;
+    private int X, Y;
 
     // Game options
     private final int ship_max_v = 3;
