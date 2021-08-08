@@ -1,12 +1,12 @@
-package net.inet_lab.terminal_games.starwars.app;
+package net.inet_lab.terminal_games.jsbridge;
 
 import net.inet_lab.terminal_games.common.DisplayDriver;
 import net.inet_lab.terminal_games.common.EventDriver;
-import net.inet_lab.terminal_games.starwars.game.SWGame;
+import net.inet_lab.terminal_games.common.TerminalGame;
 import org.teavm.jso.JSBody;
 
-public class SWJSApp {
-    static DisplayDriver.TerminalGame game;
+public class JSApp {
+    public static TerminalGame game;
 
     @JSBody(params = {"message"}, script = "console.log(message)")
     public static native void log(String message);
@@ -26,7 +26,7 @@ public class SWJSApp {
     @JSBody(params = {"x", "y", "text"}, script = "Canvas.put(x, y, text)")
     public static native int put(int x, int y, String text);
 
-    public static void main(String[] args) {
+    public static void dispatch(String[] args) {
         String returnValue = null;
 
         switch (args[0]) {
@@ -45,9 +45,8 @@ public class SWJSApp {
     private static void init() {
         log("SWJSApp::int()");
         final JSCanvas jsCanvas = new JSCanvas();
-        game = new SWGame(jsCanvas);
 
-        game.init(0);
+        game.init(jsCanvas, 0);
     }
 
     private static Boolean move(String key) {
@@ -80,28 +79,28 @@ public class SWJSApp {
 
         @Override
         public int getWidth() {
-            return SWJSApp.getWidth();
+            return JSApp.getWidth();
         }
 
         @Override
         public int getHeight() {
-            return SWJSApp.getHeight();
+            return JSApp.getHeight();
         }
 
         @Override
         public void put(int x, int y, String text) {
-            SWJSApp.put(x, y, text);
+            JSApp.put(x, y, text);
         }
 
         @Override
         public void msg(String text) {
-            SWJSApp.log("[MSG] " + text);
-            SWJSApp.msg(text);
+            JSApp.log("[MSG] " + text);
+            JSApp.msg(text);
         }
 
         @Override
         public void log(String text) {
-            SWJSApp.log(text);
+            JSApp.log(text);
         }
 
         @Override
