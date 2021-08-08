@@ -130,7 +130,7 @@ public class SWGame implements TerminalGame {
                 v = rand.nextBoolean()?1:-1;
             }
 
-            disp.put(x, y, mars_img[t % mars_img.length]);
+            put_smart(x, y, mars_img[t % mars_img.length]);
             disp.flush();
 
             if (rand.nextDouble() < bomb_freq)
@@ -141,7 +141,7 @@ public class SWGame implements TerminalGame {
 
         public void clear () {
             final int L = mars_img[0].length();
-            disp.put(x, y, Utils.repeat(" ", L));
+            put_smart(x, y, Utils.repeat(" ", L));
         }
 
         public void drop_bomb() {
@@ -261,8 +261,26 @@ public class SWGame implements TerminalGame {
         disp.put(ship_x -  L/2, Y - ship_h, erase?Utils.repeat(" ",L):ship_img);
     }
 
+    private void put_smart(int x, int y, String text) {
+        final int L = text.length();
+        if (x < 0)
+            disp.put(0, y, text.substring(-x));
+        else if (x + L > X)
+            disp.put(x, y, text.substring(0, X - x));
+        else
+            disp.put(x, y, text);
+    }
+
     @Override
-    public void init(long seed) {
+    public void init(DisplayDriver displayDriver, long seed) {
+        this.disp = displayDriver;
+
+        X = disp.getWidth();
+        Y = disp.getHeight();
+
+        log("SWGame: X = " + X + ", Y = " + Y);
+
+
         if (seed != 0)
             rand.setSeed(seed);
 
