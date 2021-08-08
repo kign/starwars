@@ -33,13 +33,8 @@ public class SWGame implements DisplayDriver.TerminalGame {
     final private LinkedList<Bomb> bombs = new LinkedList<>();
     final private LinkedList<Missile> missiles = new LinkedList<>();
 
-    public SWGame(DisplayDriver displayDriver) {
-        this.disp = displayDriver;
-
-        X = disp.getWidth();
-        Y = disp.getHeight();
-
-        log("SWGame: X = " + X + ", Y = " + Y);
+    public SWGame() {
+        // Using generic JavaScript bridge necessitates no-arg x-tor
     }
 
     private class Missile {

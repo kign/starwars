@@ -6,8 +6,10 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+
 import net.inet_lab.terminal_games.common.DisplayDriver;
 import net.inet_lab.terminal_games.common.EventDriver;
+import net.inet_lab.terminal_games.common.TerminalGame;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -80,7 +82,6 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         }
     }
 
-
     @Override
     public void run(TerminalGame gameMove) throws InterruptedException {
         final String err = _run(gameMove);
@@ -151,7 +152,7 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
         trail_write("TRAIL " + TRAIL_VER + " " + X + " " + Y + " " + seed);
 
-        terminalGame.init(seed);
+        terminalGame.init(this, seed);
 
         cmd = null;
         int tick = 0;
