@@ -5,15 +5,16 @@ if [ -z ${1+x} ]; then
   exit
 fi
 
+cwd="$(pwd)"
 zip="$1"
 
 dir="/tmp/javarun_$$"
 mkdir $dir
-cd $dir
+cd $dir || exit 1
 unzip "$zip" > /dev/null
-exe=$(find */bin -type f -perm +111 | egrep -v '\.bat$' | head -1)
+exe=$(find $dir/*/bin -type f -perm +111 | egrep -v '\.bat$' | head -1)
+cd "$cwd" || exit 1
 $exe
-cd
 rm -rf $dir
 
 
