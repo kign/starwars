@@ -1,5 +1,6 @@
 package net.inet_lab.terminal_games.app;
 
+// Lanterna doc: https://github.com/mabe02/lanterna/blob/master/docs/contents.md
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -10,6 +11,7 @@ import com.googlecode.lanterna.terminal.Terminal;
 import net.inet_lab.terminal_games.common.DisplayDriver;
 import net.inet_lab.terminal_games.common.EventDriver;
 import net.inet_lab.terminal_games.common.TerminalGame;
+import net.inet_lab.terminal_games.common.Utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,8 +21,11 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
@@ -38,7 +43,6 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
 
     private final static Pattern p_TrlHdr = Pattern.compile("^TRAIL\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)$");
     private final static Pattern p_TrlLnCmd = Pattern.compile("^(\\d+)\\s+(.)\\s*(.*)$");
-
 
     @Override
     public int getWidth() {
@@ -83,14 +87,32 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
     }
 
     @Override
-    public void run(TerminalGame gameMove) throws InterruptedException {
-        final String err = _run(gameMove);
-        if (err != null)
-            trail_write("# ERROR " + err);
-        trail_write("# END OF TRAIL");
-        destroy();
-        if (err != null)
-            System.err.println(err);
+    public void run(TerminalGame terminalGame) throws InterruptedException, IOException {
+        while (true) {
+            final String err = _run(terminalGame);
+
+            if (err != null && err.length() > 0)
+                trail_write("# ERROR " + err);
+
+            trail_write("# END OF TRAIL");
+
+            if (trail != null) {
+                trail.close();
+                trail = null;
+            }
+
+            if ("".equals(err)) {
+                term.clearScreen();
+            }
+            else {
+                if (err != null)
+                    System.err.println(err);
+
+                term.close();
+                term = null;
+                return;
+            }
+        }
     }
 
     private Key pollKey () {
@@ -124,6 +146,11 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         return null;
     }
 
+    /**
+     * @param terminalGame  Game reference
+     * @return null on normal exit, '' (empty string) on retry, everything else is a error messafe
+     * @throws InterruptedException in case of `Thread.sleep` interruption
+     */
     private String _run(TerminalGame terminalGame) throws InterruptedException {
         long seed;
         String cmd;
@@ -208,12 +235,57 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
                 trail_write(tick + " E NORM");
                 return null;
             }
-            if(!terminalGame.move(gkey)) {
-                trail_write(tick + " E OVER");
-                return null;
+            TerminalGame.Status moveResult = terminalGame.move(gkey);
+            if (moveResult != TerminalGame.Status.CONT) {
+                trail_write(tick + " E " + moveResult);
+                messageBox("GAME OVER\nYOU " + ((moveResult == TerminalGame.Status.WIN)?"WON":"LOST"));
+                gkey = null;
+                while (gkey != Key.Q && gkey != Key.ESC) {
+                    Thread.sleep(100L);
+                    gkey = pollKey();
+                }
+                if (gkey == Key.ESC) {
+                    try {
+                        term.clearScreen();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return "";
+                }
+                else
+                    return null;
             }
             Thread.sleep((long) (1000 / fps));
         }
+    }
+
+    private void messageBox(String text) {
+        final String[] txt = text.split("\n");
+        final int h = txt.length + 2;
+        final String fin = "Press Q to quit, ESC to restart";
+        final int w = 2 + Math.max(fin.length(), Collections.max(Arrays.stream(txt).map(String::length).collect(Collectors.toList())));
+
+        final int x = X/2 - w/2 - 1;
+        final int y = Y/2 - h/2 - 1;
+
+        g.putString(x, y, '+' + Utils.repeat("-", w) + '+');
+        g.putString(x, y+h+1, '+' + Utils.repeat("-", w) + '+');
+
+        for (int ii = 0; ii < h; ii ++) {
+            g.putString(x, y + ii + 1, "|");
+            g.putString(x + 1, y + ii + 1, Utils.repeat(" ", w));
+            g.putString(x + w + 1, y + ii + 1, "|");
+        }
+
+        for (int ii = 0; ii < txt.length + 2; ii ++) {
+            if (ii == txt.length)
+                continue;
+            final String t = (ii < txt.length)?txt[ii]:fin;
+            int L = t.length();
+            g.putString(x + 1 + (w - L)/2, y + ii + 1, t );
+        }
+
+        flush ();
     }
 
     private void trail_write(String text) {
@@ -245,7 +317,6 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
         return res;
     }
 
-    @Override
     public void destroy() {
         if (term != null) {
             try {
@@ -256,17 +327,6 @@ public class TerminalEngine implements DisplayDriver, EventDriver {
             term = null;
         }
 
-        if (trail != null) {
-            try {
-                trail.close();
-            } catch (IOException e) {
-                if (!write_filed) {
-                    write_filed = true;
-                    msg("Trail: " + e);
-                }
-            }
-            trail = null;
-        }
     }
 
     public TerminalEngine statusLine(int status_line) {
