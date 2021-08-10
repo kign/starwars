@@ -43,15 +43,15 @@ public class JSApp {
     }
 
     private static void init() {
-        log("SWJSApp::int()");
+//        log("SWJSApp::int()");
         final JSCanvas jsCanvas = new JSCanvas();
 
         game.init(jsCanvas, 0);
     }
 
-    private static Boolean move(String key) {
-        if (key.length() > 0)
-            log("SWJSApp::move('" + key + "')");
+    private static TerminalGame.Status move(String key) {
+//        if (key.length() > 0)
+//            log("SWJSApp::move('" + key + "')");
         EventDriver.Key ekey;
 
         switch (key) {
@@ -69,14 +69,13 @@ public class JSApp {
                 break;
             default :
                 log("Key " + key + " isn't handled");
-                return true;
+                return TerminalGame.Status.CONT;
         }
 
         return game.move(ekey);
     }
 
     static class JSCanvas implements DisplayDriver {
-
         @Override
         public int getWidth() {
             return JSApp.getWidth();
@@ -105,10 +104,6 @@ public class JSApp {
 
         @Override
         public void flush() {
-        }
-
-        @Override
-        public void destroy() {
         }
     }
 }
