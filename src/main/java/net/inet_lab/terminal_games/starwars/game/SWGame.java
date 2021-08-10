@@ -19,20 +19,25 @@ public class SWGame implements TerminalGame {
     private final String[] mars_img = {"/***\\", "\\***/"};
     private final int mars_strip = 5;
     private final int mars_num = 5;
-    private final int mars_total = 20;
+    private final int mars_total = 120;
     private final int ship_h = 4;
     private final double bomb_freq = 0.02;
+    private final int humans_width = 3;
+    private final int humans_period = 5;
 
     // random generator
     private final Random rand = new Random ();
 
-    // runtime data
-    private int gt;
+    // runtime data; all vars must be reset in `init`
+    private int timer;
     private int ship_x;
     private int ship_v;
     final private Mars[] mars_a = new Mars[mars_num];
     final private LinkedList<Bomb> bombs = new LinkedList<>();
     final private LinkedList<Missile> missiles = new LinkedList<>();
+    private boolean[] bombs_ground;
+    int humans_cnt;
+    int mars_reserve;
 
     public SWGame() {
         // Using generic JavaScript bridge necessitates no-arg x-tor
@@ -82,8 +87,27 @@ public class SWGame implements TerminalGame {
         public boolean move () {
             clear ();
             y ++;
-            if (y >= Y)
+            if (y >= Y) {
+                if (!bombs_ground[x]) {
+                    int h = 0;
+                    bombs_ground[x] = true;
+                    for (int vx = 0; vx + humans_width <= X; vx += humans_period) {
+                        int remains = 0;
+                        for (int wx = 0; wx < humans_width; wx ++)
+                            if (!bombs_ground[vx + wx])
+                                remains ++;
+                        if (remains > 0)
+                            h ++;
+                    }
+                    if (h != humans_cnt && h != humans_cnt-1)
+                        log("Something's off, humans count changed from " + humans_cnt + " to " + h);
+                    if (h != humans_cnt) {
+                        humans_cnt = h;
+                        msg("One less human, sorry");
+                    }
+                }
                 return false;
+            }
 
             disp.put(x, y, "o");
             return true;
@@ -152,24 +176,29 @@ public class SWGame implements TerminalGame {
     }
 
     @Override
-    public boolean move(EventDriver.Key key) {
-        gt ++;
+    public TerminalGame.Status move(EventDriver.Key key) {
+        timer++;
 
         if (key != null) {
             if (ship_v < ship_max_v && key == EventDriver.Key.RIGHT) {
                 ship_v++;
-                disp.msg("Speed " + ship_v);
+                msg("Speed " + ship_v);
             }
             else if (ship_v > -ship_max_v && key == EventDriver.Key.LEFT) {
                 ship_v--;
-                disp.msg("Speed " + ship_v);
+                msg("Speed " + ship_v);
             }
             else if (key == EventDriver.Key.SPC)
                 missiles.add(new Missile(ship_x, Y - ship_h, ship_v/4.0));
         }
 
         _move ();
-        return true;
+        if (humans_cnt == 0 /* || timer > 30 */)
+            return TerminalGame.Status.LOSE;
+        else if (mars_reserve == 0 && mars_active() == 0)
+            return TerminalGame.Status.WIN;
+        else
+            return TerminalGame.Status.CONT;
     }
 
     private void _move () {
@@ -189,26 +218,27 @@ public class SWGame implements TerminalGame {
         }
 
         draw_ship(false);
-        disp.flush();
 
         for(int ii = 0; ii < mars_a.length; ii ++) {
             if (mars_a[ii] == null) {
-                if (gt > 20)
+                if (timer > 20 && mars_reserve > 0) {
                     mars_a[ii] = new Mars();
+                    mars_reserve --;
+                }
             }
             else if (!mars_a[ii].move()) {
                 mars_a[ii] = null;
+                mars_reserve ++;
             }
         }
 
-        //bombs.removeIf(bomb -> !bomb.move());
         Utils.removeIf(bombs, bomb -> !bomb.move());
         missile_x_bomb();
-        //missiles.removeIf(missile -> !missile.move());
         Utils.removeIf(missiles, missile -> !missile.move());
         missile_x_bomb();
 
         missile_x_mars ();
+        disp.flush();
     }
 
     private void missile_x_mars () {
@@ -224,7 +254,7 @@ public class SWGame implements TerminalGame {
 
                     mars_a[ii].clear();
                     mars_a[ii] = null;
-
+                    msg("Yey, one less ship!");
                     return true;
                 }
 
@@ -280,16 +310,19 @@ public class SWGame implements TerminalGame {
 
         log("SWGame: X = " + X + ", Y = " + Y);
 
+        bombs_ground = new boolean[X];
 
         if (seed != 0)
             rand.setSeed(seed);
 
         int x = 0, y = Y - 3;
-        while (x + 2 < X) {
+        humans_cnt = 0;
+        while (x + humans_width <= X) {
             disp.put(x, y, "\\o/");
             disp.put(x+1, y+1, "O");
             disp.put(x, y+2, "J L");
-            x += 5;
+            x += humans_period;
+            humans_cnt ++;
             disp.flush();
         }
 
@@ -297,11 +330,38 @@ public class SWGame implements TerminalGame {
         ship_v = 0;
         draw_ship(false);
 
-        gt = 0;
+        timer = 0;
+
+        for (int ii = 0; ii < mars_num; ii ++)
+            mars_a[ii] = null;
+        mars_reserve = mars_total;
+        bombs.clear();
+        missiles.clear();
+
         disp.flush();
+
+        msg("Starting the game!");
     }
 
     private void log(String message) {
         this.disp.log(message);
+    }
+
+    private int mars_active () {
+        int n = 0;
+        for (int ii = 0; ii < mars_num; ii++)
+            if (mars_a[ii] != null)
+                n ++;
+
+        return n;
+    }
+
+    private void msg(String message) {
+        final String statusLine = "| Ships: " + (mars_active() + mars_reserve) + "; Humans: " + humans_cnt;
+        final int L = X - statusLine.length();
+
+        if (message.length() > L)
+            message = message.substring(0, L - 3) + "...";
+        disp.msg(message + Utils.repeat(" ", L - message.length()) + statusLine);
     }
 }
