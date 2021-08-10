@@ -16,7 +16,4 @@ public interface DisplayDriver {
 
     // flush updates
     void flush();
-
-    // cleanup
-    void destroy();
 }
