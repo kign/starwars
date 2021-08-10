@@ -19,17 +19,6 @@ repositories {
     mavenCentral()
 }
 
-/*
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'net.inet_lab.starwars.SWApp'
-        )
-    }
-}
-*/
-
-
 dependencies {
     implementation group: 'com.googlecode.lanterna', name: 'lanterna', version: '3.0.3'
     compileOnly group: 'org.teavm', name: 'teavm-jso', version: '0.6.1'
@@ -47,7 +36,7 @@ test {
 }
 
 teavm {
-    /** It a FileCollection object with all the calssfiles to use in compilation */
+    /** It a FileCollection object with all the class files to use in compilation */
 
     // See docs: http://teavm.org/docs/tooling/maven.html
 
