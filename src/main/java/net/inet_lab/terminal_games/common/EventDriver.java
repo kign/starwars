@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public interface EventDriver {
     enum Key {
-        Q, P, ESC, LEFT, RIGHT, SPC;
+        Q, P, ESC, LEFT, RIGHT, SPC
     }
     void run(TerminalGame gameMove) throws InterruptedException, IOException;
 }

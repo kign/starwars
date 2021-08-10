@@ -5,6 +5,6 @@ public interface TerminalGame {
     void init(DisplayDriver displayDriver, long seed);
 
     enum Status {
-        CONT, WIN, LOSE;
+        CONT, WIN, LOSE
     }
 }

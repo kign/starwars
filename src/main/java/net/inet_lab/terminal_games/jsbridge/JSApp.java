@@ -24,7 +24,7 @@ public class JSApp {
     public static native int getHeight();
 
     @JSBody(params = {"x", "y", "text"}, script = "Canvas.put(x, y, text)")
-    public static native int put(int x, int y, String text);
+    public static native void put(int x, int y, String text);
 
     public static void dispatch(String[] args) {
         String returnValue = null;
