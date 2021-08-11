@@ -12,6 +12,9 @@ To rebuild everything, use this command:
 ./gradlew --no-daemon clean assemble teavm
 ```
 
+_(NOTE: The reason we're using `--no-daemon` is because in some circumstances `teavm` task fails to take into account updated source;
+though I suspect that's only a problem with multi-module `gradle` projects, but anyway)_
+
 There are three ways you can run it:
 
  * Using `lanterna`-based Java terminal emulator:
@@ -20,7 +23,7 @@ There are three ways you can run it:
 ./gradlew run
 ```
 
- * In the current terminal, using `lanterna`-based `ncurses` implementaion:
+ * In the current terminal, using `lanterna`-based `ncurses` implementation:
 
 ```bash
 etc/javarun.sh build/distributions/starwars-1.0-SNAPSHOT.zip
@@ -31,6 +34,9 @@ etc/javarun.sh build/distributions/starwars-1.0-SNAPSHOT.zip
 ```bash
 open docs/starwars.html
 ```
+
+Or simply use hosted version [https://kign.github.io/starwars/starwars.html](https://kign.github.io/starwars/starwars.html).
+
 Commands:
 
  * `SPACE` shoot
@@ -43,6 +49,7 @@ Commands:
  * Project is designed in a modular fashion to make it possible to similarly add other terminal games;
  * We don't yet use colors; terminal version will use your current foreground and background colors, `lanterna` emulator used white on black, Web version is white on
    teal, which has a benefit of working nicely despite one's local configuration. Still, we might adopt some color palette in the future;
+ * Similarly, we don't use Unicode symbols. This makes it more fun :wink:;
  * `TeaVM` doesn't yet support some Java standard library methods added in Java 1.8 or later. This necessitates special library [`Utils.java`](https://github.com/kign/starwars/blob/master/src/main/java/net/inet_lab/terminal_games/common/Utils.java)
  * Originally, I was planning to generate Web Assembly from Java classes, but current version of `TeaVM` sadly has Web Assembly generator broken. That said, there is little downside to using JavaScript version. Also, for simplicity I am not using
    minifying; this is a simple option in `build.gradle`;
