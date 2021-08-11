@@ -47,10 +47,9 @@ Commands:
 ## Implementation notes
 
  * Project is designed in a modular fashion to make it possible to similarly add other terminal games;
- * We don't yet use colors; terminal version will use your current foreground and background colors, `lanterna` emulator used white on black, Web version is white on
-   teal, which has a benefit of working nicely despite one's local configuration. Still, we might adopt some color palette in the future;
+ * We don't yet use colors; terminal version will use your current foreground and background colors, `lanterna` emulator used white on black, Web version is white on teal, which has a benefit of working nicely despite one's local configuration. Still, we might adopt some color palette in the future;
  * Similarly, we don't use Unicode symbols. This makes it more fun :wink:;
  * `TeaVM` doesn't yet support some Java standard library methods added in Java 1.8 or later. This necessitates special library [`Utils.java`](https://github.com/kign/starwars/blob/master/src/main/java/net/inet_lab/terminal_games/common/Utils.java)
- * Originally, I was planning to generate Web Assembly from Java classes, but current version of `TeaVM` sadly has Web Assembly generator broken. That said, there is little downside to using JavaScript version. Also, for simplicity I am not using
-   minifying; this is a simple option in `build.gradle`;
+ * Originally, I was planning to generate Web Assembly from Java classes, but current version of `TeaVM` sadly has Web Assembly generator broken. That said, there is little downside to using JavaScript version;
+ * Also, for simplicity I am not using minifying, which makes generated 3,500-lines JavaScript file [almost readable](https://github.com/kign/starwars/blob/master/docs/starwars.js). There is an option to turn it on in `build.gradle`;
  * When run in a terminal (native or emulator), we save a "trail file" which could then be replayed (when passed as an argument) for testing or for fun.
