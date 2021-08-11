@@ -33,7 +33,7 @@ const Canvas = (function () {
         if (ext >= 0)
             fcell(c_bg, x, y, ext);
         ctx.fillStyle = color;
-        ctx.font = `${box-0}px Arial`;
+        ctx.font = `${box}px Arial`;
         if (c !== ' ')
             ctx.fillText(c, pad + x * (spc + box) + 1,
                 (flip?(H - pad - y * (spc + box)): (pad + box + y * (spc + box))) - 1);
@@ -79,13 +79,19 @@ const Canvas = (function () {
             return Y;
         },
 
-        getCanvas: function () {
-            return canvas;
-        },
-
         put: function (x, y, text) {
             for(let v = 0; v < text.length; v ++)
                 tcell(c_fg, text[v], x + v, y, 2);
+        },
+
+        messageBox: function (msg) {
+            const size = 3 * box;
+            const spacing = 4 * box;
+            ctx.textAlign = 'center';
+            ctx.font = `${size}px Arial`;
+            const txt_a = msg.split('\n');
+            const h0 = H/2 - (txt_a.length - 1) * spacing / 2;
+            txt_a.forEach((txt ,idx) => ctx.fillText(txt, W / 2, h0 + spacing * idx));
         }
     }
 }());
