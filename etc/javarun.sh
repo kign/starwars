@@ -6,7 +6,7 @@ if [ -z ${1+x} ]; then
 fi
 
 cwd="$(pwd)"
-zip="$1"
+zip=$(realpath "$1")
 
 dir="/tmp/javarun_$$"
 mkdir $dir
