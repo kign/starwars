@@ -1,1 +1,0 @@
-../build/js/starwars.js

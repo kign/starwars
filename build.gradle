@@ -54,7 +54,7 @@ teavm {
     //transformers = null
 
     /** Where to save the result */
-    targetDirectory = file("$buildDir/js")
+    targetDirectory = file("$projectDir/doc")
 
     /** The directory to monitor to decide if compile is up-to-date or not */
     sourceDirectory = null
